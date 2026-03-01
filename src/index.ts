@@ -1,3 +1,19 @@
-export const sum = (a: number, b: number): number => a + b;
+#!/usr/bin/env node
+import {loadConfig} from './config.js';
+import {startRelay} from './relay.js';
+import {startAgent} from './agent.js';
 
-export const multiply = (a: number, b: number): number => a * b;
+const main = async () => {
+	const config = loadConfig();
+
+	if (config.mode === 'relay') {
+		startRelay(config);
+	} else {
+		await startAgent(config);
+	}
+};
+
+main().catch((err: unknown) => {
+	console.error(err);
+	process.exit(1);
+});

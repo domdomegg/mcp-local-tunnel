@@ -1,15 +1,14 @@
 {
-  "name": "typescript-library-template",
+  "name": "mcp-local-tunnel",
   "version": "0.0.0",
-  "description": "Template for creating TypeScript libraries",
+  "description": "Expose local MCP servers to remote clients without opening ports.",
   "license": "MIT",
   "author": "Adam Jones (domdomegg)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/domdomegg/typescript-library-template.git"
+    "url": "https://github.com/domdomegg/mcp-local-tunnel.git"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "bin": "dist/index.js",
   "files": [
     "dist"
   ],
@@ -19,14 +18,24 @@
     "lint": "eslint",
     "clean": "rm -rf dist",
     "build": "tsc --project tsconfig.build.json",
+    "start": "npm run build && node dist/index.js",
     "prepublishOnly": "npm run clean && npm run build"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "^22.0.2",
+    "@types/express": "^5.0.6",
+    "@types/ws": "^8.18.1",
     "eslint": "^9.32.0",
     "eslint-config-domdomegg": "^2.0.9",
     "tsconfig-domdomegg": "^1.0.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "express": "^5.2.1",
+    "jose": "^6.1.3",
+    "ws": "^8.18.0",
+    "zod": "^4.3.6"
   }
 }
