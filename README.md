@@ -2,7 +2,7 @@
 
 > Expose local [MCP servers](https://modelcontextprotocol.io/) to remote clients — without opening ports.
 
-Want to use local tools like [shell-exec-mcp](https://github.com/domdomegg/shell-exec-mcp), [computer-use-mcp](https://github.com/domdomegg/computer-use-mcp), or a filesystem server from a remote MCP client like Claude.ai? Normally you'd need port forwarding, a static IP, or a VPN. mcp-local-tunnel removes all of that.
+Want to use local tools like [shell-exec-mcp](https://github.com/domdomegg/shell-exec-mcp), [computer-use-mcp](https://github.com/domdomegg/computer-use-mcp), or [filesystem-mcp](https://github.com/domdomegg/filesystem-mcp) from a remote MCP client like Claude.ai? Normally you'd need port forwarding, a static IP, or a VPN. mcp-local-tunnel removes all of that.
 
 You run a **relay** on a server with a public URL, and an **agent** on your local machine. The agent connects outward to the relay over WebSocket — no inbound ports needed. The relay exposes a standard [streamable HTTP](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http) MCP endpoint with [OAuth 2.1](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization) auth, so any MCP client can connect to it.
 
@@ -72,7 +72,7 @@ MCP_LOCAL_TUNNEL_CONFIG='{
   "servers": {
     "shell": {"command": ["npx", "-y", "shell-exec-mcp"]},
     "computer": {"command": ["npx", "-y", "computer-use-mcp"]},
-    "files": {"command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/user/docs"]}
+    "filesystem": {"command": ["npx", "-y", "filesystem-mcp"]}
   }
 }' npx -y mcp-local-tunnel
 ```
@@ -153,8 +153,8 @@ A full agent example:
     "computer": {
       "command": ["npx", "-y", "computer-use-mcp"]
     },
-    "files": {
-      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/adam/docs"]
+    "filesystem": {
+      "command": ["npx", "-y", "filesystem-mcp"]
     }
   }
 }
