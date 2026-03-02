@@ -71,10 +71,13 @@ MCP_LOCAL_TUNNEL_CONFIG='{
   "relay": "tunnel.example.com",
   "servers": {
     "shell": {"command": ["npx", "-y", "shell-exec-mcp"]},
-    "computer": {"command": ["npx", "-y", "computer-use-mcp"]}
+    "computer": {"command": ["npx", "-y", "computer-use-mcp"]},
+    "files": {"command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/user/docs"]}
   }
 }' npx -y mcp-local-tunnel
 ```
+
+On first run, the agent opens your browser for login (same identity provider as the relay). After authenticating, the token is cached in `~/.config/mcp-local-tunnel/` so subsequent runs connect immediately.
 
 The agent spawns the configured local MCP servers, connects to the relay, and registers all their tools. Remote clients see tools like `shell__execute` and `computer__computer` — namespaced by server name.
 

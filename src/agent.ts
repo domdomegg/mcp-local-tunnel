@@ -7,6 +7,7 @@ import type {Transport} from '@modelcontextprotocol/sdk/shared/transport.js';
 import type {
 	AgentConfig, ToolDef, WsMessage,
 } from './types.js';
+import {getAccessToken} from './agent-auth.js';
 
 type LocalServer = {
 	name: string;
@@ -17,11 +18,24 @@ type LocalServer = {
 const MAX_RECONNECT_DELAY_MS = 30_000;
 const INITIAL_RECONNECT_DELAY_MS = 1_000;
 
+const toWsUrl = (relay: string): string => {
+	if (relay.startsWith('ws://') || relay.startsWith('wss://')) {
+		return relay.endsWith('/ws') ? relay : `${relay.replace(/\/$/, '')}/ws`;
+	}
+
+	if (relay.startsWith('http://') || relay.startsWith('https://')) {
+		const url = new URL(relay);
+		url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+		url.pathname = `${url.pathname.replace(/\/$/, '')}/ws`;
+		return url.toString();
+	}
+
+	return `wss://${relay}/ws`;
+};
+
 export const startAgent = async (config: AgentConfig): Promise<void> => {
 	const name = config.name ?? os.hostname();
-	const relayUrl = config.relay.startsWith('ws')
-		? config.relay
-		: `wss://${config.relay}/ws`;
+	const relayUrl = toWsUrl(config.relay);
 
 	let reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
 	let shouldReconnect = true;
@@ -118,10 +132,11 @@ export const startAgent = async (config: AgentConfig): Promise<void> => {
 		let servers = await spawnServers();
 		let tools = await collectTools(servers);
 
+		const token = await getAccessToken(config.relay);
+
 		const wsUrl = new URL(relayUrl);
 		wsUrl.searchParams.set('name', name);
-		// TODO: add token auth once agent-side OIDC flow is implemented
-		// wsUrl.searchParams.set('token', cachedToken);
+		wsUrl.searchParams.set('token', token);
 
 		console.log(`Connecting to ${config.relay} as "${name}"...`);
 

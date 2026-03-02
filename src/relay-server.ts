@@ -12,6 +12,7 @@ import type {OidcClient} from './oidc-client.js';
 import type {ConnectionManager} from './connection-manager.js';
 import type {RelayConfig} from './types.js';
 import {createRelayMcpServer} from './relay-mcp-server.js';
+import {renderErrorPage} from './pages.js';
 
 const getString = (value: unknown): string | undefined =>
 	typeof value === 'string' ? value : undefined;
@@ -86,13 +87,13 @@ export const createRelayApp = (
 			const sealedState = getString(req.query.state);
 
 			if (!code || !sealedState) {
-				res.status(400).send('Missing code or state parameter');
+				res.status(400).type('html').send(renderErrorPage('Missing code or state parameter.'));
 				return;
 			}
 
 			const pending = provider.unsealState(sealedState);
 			if (!pending) {
-				res.status(400).send('Invalid or expired authorization session');
+				res.status(400).type('html').send(renderErrorPage('Invalid or expired authorization session.'));
 				return;
 			}
 
@@ -103,7 +104,7 @@ export const createRelayApp = (
 			res.redirect(redirectUrl);
 		} catch (err) {
 			console.error('Callback error:', err);
-			res.status(500).send('Authentication failed');
+			res.status(500).type('html').send(renderErrorPage('Authentication failed.'));
 		}
 	});
 
