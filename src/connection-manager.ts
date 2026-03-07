@@ -14,18 +14,38 @@ export type AgentConnection = {
 	name: string;
 	connectedAt: number;
 	tools: ToolDef[];
+	lastPingAt: number;
 };
 
 const REQUEST_TIMEOUT_MS = 120_000; // 2 minutes
+const STALE_CHECK_INTERVAL_MS = 60_000;
+const STALE_THRESHOLD_MS = 90_000; // 3 missed 30s pings
 
 export class ConnectionManager {
 	/** userId -> AgentConnection[] (one per device) */
 	private readonly connections = new Map<string, AgentConnection[]>();
 	private readonly pending = new Map<string, PendingRequest>();
 
+	constructor() {
+		// Periodically terminate connections that haven't pinged recently
+		const interval = setInterval(() => {
+			const threshold = Date.now() - STALE_THRESHOLD_MS;
+			for (const conns of this.connections.values()) {
+				for (const conn of conns) {
+					if (conn.lastPingAt < threshold) {
+						console.log(`No ping from "${conn.name}" (${conn.userId}) for ${Math.round((Date.now() - conn.lastPingAt) / 1000)}s, terminating.`);
+						conn.ws.terminate();
+					}
+				}
+			}
+		}, STALE_CHECK_INTERVAL_MS);
+		interval.unref();
+	}
+
 	addConnection(ws: WebSocket, userId: string, name: string): AgentConnection {
+		const now = Date.now();
 		const conn: AgentConnection = {
-			ws, userId, name, connectedAt: Date.now(), tools: [],
+			ws, userId, name, connectedAt: now, tools: [], lastPingAt: now,
 		};
 
 		ws.on('message', (data: Buffer) => {
@@ -35,6 +55,11 @@ export class ConnectionManager {
 			} catch (err) {
 				console.error('Failed to parse WebSocket message:', err);
 			}
+		});
+
+		// Track agent pings as liveness signal
+		ws.on('ping', () => {
+			conn.lastPingAt = Date.now();
 		});
 
 		ws.on('close', () => {
