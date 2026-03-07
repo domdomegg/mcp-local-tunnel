@@ -1,6 +1,6 @@
 {
   "name": "mcp-local-tunnel",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Expose local MCP servers to remote clients without opening ports.",
   "license": "MIT",
   "author": "Adam Jones (domdomegg)",
