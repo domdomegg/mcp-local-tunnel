@@ -81,6 +81,8 @@ On first run, the agent opens your browser for login (same identity provider as 
 
 The agent spawns the configured local MCP servers, connects to the relay, and registers all their tools. Remote clients see tools like `shell__execute` and `computer__computer` — namespaced by server name.
 
+When used as an MCP server in tools like Claude Code or opencode, the agent runs as a background daemon. Multiple sessions share a single relay connection — the daemon stays alive as long as at least one session exists, and shuts down automatically after the last session ends. Daemon logs are written to `~/.config/mcp-local-tunnel/logs/`.
+
 If the agent disconnects (laptop sleeps, network drops), it automatically reconnects with exponential backoff.
 
 ### Config
