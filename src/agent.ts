@@ -17,6 +17,8 @@ type LocalServer = {
 
 const MAX_RECONNECT_DELAY_MS = 30_000;
 const INITIAL_RECONNECT_DELAY_MS = 1_000;
+const PING_INTERVAL_MS = 30_000;
+const PONG_TIMEOUT_MS = 10_000;
 
 const toWsUrl = (relay: string): string => {
 	if (relay.startsWith('ws://') || relay.startsWith('wss://')) {
@@ -33,12 +35,19 @@ const toWsUrl = (relay: string): string => {
 	return `wss://${relay}/ws`;
 };
 
-export const startAgent = async (config: AgentConfig): Promise<void> => {
+export type AgentHandle = {
+	/** Gracefully shut down the agent, closing all connections and servers. */
+	stop: () => Promise<void>;
+};
+
+export const startAgent = async (config: AgentConfig): Promise<AgentHandle> => {
 	const name = config.name ?? os.hostname();
 	const relayUrl = toWsUrl(config.relay);
 
 	let reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
 	let shouldReconnect = true;
+	let currentWs: WebSocket | undefined;
+	let currentServers: LocalServer[] = [];
 
 	const spawnServers = async (): Promise<LocalServer[]> => {
 		const servers: LocalServer[] = [];
@@ -142,6 +151,9 @@ export const startAgent = async (config: AgentConfig): Promise<void> => {
 
 		const ws = new WebSocket(wsUrl.toString());
 
+		let pingInterval: ReturnType<typeof setInterval> | undefined;
+		let pongTimeout: ReturnType<typeof setTimeout> | undefined;
+
 		ws.on('open', () => {
 			reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
 			console.log(`Connected to ${config.relay} as "${name}"`);
@@ -149,6 +161,24 @@ export const startAgent = async (config: AgentConfig): Promise<void> => {
 
 			const msg: WsMessage = {type: 'tools', tools};
 			ws.send(JSON.stringify(msg));
+
+			// Start ping/pong keepalive
+			pingInterval = setInterval(() => {
+				if (ws.readyState === WebSocket.OPEN) {
+					ws.ping();
+					pongTimeout = setTimeout(() => {
+						console.log('Pong timeout — connection dead, terminating.');
+						ws.terminate();
+					}, PONG_TIMEOUT_MS);
+				}
+			}, PING_INTERVAL_MS);
+		});
+
+		ws.on('pong', () => {
+			if (pongTimeout) {
+				clearTimeout(pongTimeout);
+				pongTimeout = undefined;
+			}
 		});
 
 		ws.on('message', async (data: Buffer) => {
@@ -183,6 +213,16 @@ export const startAgent = async (config: AgentConfig): Promise<void> => {
 		});
 
 		ws.on('close', () => {
+			if (pingInterval) {
+				clearInterval(pingInterval);
+				pingInterval = undefined;
+			}
+
+			if (pongTimeout) {
+				clearTimeout(pongTimeout);
+				pongTimeout = undefined;
+			}
+
 			console.log('Disconnected from relay.');
 			void closeServers(servers);
 
@@ -199,16 +239,18 @@ export const startAgent = async (config: AgentConfig): Promise<void> => {
 			console.error('WebSocket error:', err.message);
 		});
 
-		const shutdown = () => {
-			shouldReconnect = false;
-			console.log('\nShutting down agent...');
-			ws.close();
-			void closeServers(servers).then(() => process.exit(0));
-		};
-
-		process.on('SIGINT', shutdown);
-		process.on('SIGTERM', shutdown);
+		currentWs = ws;
+		currentServers = servers;
 	};
 
 	await connect();
+
+	return {
+		async stop() {
+			shouldReconnect = false;
+			console.log('\nShutting down agent...');
+			currentWs?.close();
+			await closeServers(currentServers);
+		},
+	};
 };
