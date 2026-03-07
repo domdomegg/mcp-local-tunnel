@@ -166,6 +166,10 @@ export const startAgent = async (config: AgentConfig): Promise<AgentHandle> => {
 			pingInterval = setInterval(() => {
 				if (ws.readyState === WebSocket.OPEN) {
 					ws.ping();
+					if (pongTimeout) {
+						clearTimeout(pongTimeout);
+					}
+
 					pongTimeout = setTimeout(() => {
 						console.log('Pong timeout — connection dead, terminating.');
 						ws.terminate();
