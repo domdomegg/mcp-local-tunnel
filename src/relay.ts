@@ -11,7 +11,7 @@ export const startRelay = (config: RelayConfig): void => {
 	const {app, attachWebSocket} = createRelayApp(config, provider, oidcClient, connectionManager);
 
 	const port = config.port ?? 3000;
-	const host = config.host ?? '0.0.0.0';
+	const host = config.host ?? '::';
 	const server = app.listen(port, host, () => {
 		console.log(`mcp-local-tunnel relay listening on ${host}:${port}`);
 		console.log(`Auth: ${config.auth.issuer}`);
