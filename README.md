@@ -107,7 +107,7 @@ Only `mode` and `auth.issuer` are required. Everything else has sensible default
 | `auth.scopes` | No | Scopes to request during login. Defaults to `["openid"]`. |
 | `auth.userClaim` | No | Which field from the login token identifies the user. Defaults to `"sub"`. |
 | `port` | No | Port to listen on. Defaults to `3000`. |
-| `host` | No | Host to bind to. Defaults to `"0.0.0.0"`. |
+| `host` | No | Host to bind to. Defaults to `"::"`. |
 | `issuerUrl` | No | Public URL of this server. Required when behind a reverse proxy. |
 | `secret` | No | Signing key for tokens. Random if not set. Set a fixed value to survive restarts. |
 
