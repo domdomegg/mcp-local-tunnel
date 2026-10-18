@@ -21,6 +21,11 @@ export const RelayConfigSchema = z.object({
 	host: z.string().optional(),
 	issuerUrl: z.url().optional(),
 	secret: z.string().optional(),
+	/**
+	 * Hosted client redirect URIs trusted without a confirmation step (loopback and native app URIs always are).
+	 * Defaults to well-known hosted client callbacks (Claude, ChatGPT, Cursor; see `src/redirect-uri.ts`); setting this replaces the defaults. A trailing `*` matches any suffix.
+	 */
+	allowedRedirectUris: z.array(z.string()).optional(),
 });
 
 export const AgentConfigSchema = z.object({

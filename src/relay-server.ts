@@ -12,7 +12,8 @@ import type {OidcClient} from './oidc-client.js';
 import type {ConnectionManager} from './connection-manager.js';
 import type {RelayConfig} from './types.js';
 import {createRelayMcpServer} from './relay-mcp-server.js';
-import {renderErrorPage} from './pages.js';
+import {renderErrorPage, renderRedirectConfirmPage} from './pages.js';
+import {checkRedirectUri} from './redirect-uri.js';
 
 const getString = (value: unknown): string | undefined =>
 	typeof value === 'string' ? value : undefined;
@@ -46,6 +47,11 @@ export const createRelayApp = (
 
 		if (codeChallengeMethod && codeChallengeMethod !== 'S256') {
 			res.status(400).json({error: 'invalid_request', error_description: 'code_challenge_method must be S256'});
+			return;
+		}
+
+		if (checkRedirectUri(redirectUri, config.allowedRedirectUris) === 'invalid') {
+			res.status(400).json({error: 'invalid_request', error_description: 'Invalid redirect_uri'});
 			return;
 		}
 
@@ -101,6 +107,14 @@ export const createRelayApp = (
 			const {userId} = await oidcClient.exchangeCode(code, callbackUrl, pending.upstreamCodeVerifier);
 
 			const {redirectUrl} = provider.completeAuthorization(pending, userId);
+			// The redirect_uri is attacker-controllable (see redirect-uri.ts), so name it before handing over the code
+			if (checkRedirectUri(pending.redirectUri, config.allowedRedirectUris) === 'needs_consent') {
+				res.set('X-Frame-Options', 'DENY');
+				res.set('Content-Security-Policy', 'frame-ancestors \'none\'');
+				res.type('html').send(renderRedirectConfirmPage(redirectUrl, new URL(pending.redirectUri).host));
+				return;
+			}
+
 			res.redirect(redirectUrl);
 		} catch (err) {
 			console.error('Callback error:', err);
