@@ -53,6 +53,20 @@ ${footerHtml}
 </body>
 </html>`;
 
+export const renderRedirectConfirmPage = (clientRedirectUrl: string, untrustedHost: string): string => `${pageHead('Confirm access', `h1 { margin-bottom: 8px; }
+  .msg { font-size: 13px; color: var(--subtle); margin-bottom: 28px; }
+  .msg strong { color: var(--fg); }
+  .btn { display: inline-block; font: inherit; font-size: 12px; font-weight: 600; padding: 8px 20px; border-radius: 4px; border: none; cursor: pointer; text-decoration: none; background: var(--btn-bg); color: var(--btn-fg); }
+  .btn:hover { background: var(--btn-hover); }`)}
+<body>
+<h1>MCP Local Tunnel</h1>
+<p class="msg">This will give <strong>${escapeHtml(untrustedHost)}</strong> access to your local MCP servers.</p>
+<p class="msg">Only continue if you started this sign-in yourself and you recognise this address. If someone sent you a link, close this page.</p>
+<a class="btn" href="${escapeHtml(clientRedirectUrl)}">continue to ${escapeHtml(untrustedHost)}</a>
+${footerHtml}
+</body>
+</html>`;
+
 export const renderErrorPage = (message: string): string => `${pageHead('Authentication failed', `${CENTER_CSS}
   .msg-err { color: var(--error); }`)}
 <body>

@@ -110,6 +110,7 @@ Only `mode` and `auth.issuer` are required. Everything else has sensible default
 | `host` | No | Host to bind to. Defaults to `"::"`. |
 | `issuerUrl` | No | Public URL of this server. Required when behind a reverse proxy. |
 | `secret` | No | Signing key for tokens. Random if not set. Set a fixed value to survive restarts. |
+| `allowedRedirectUris` | No | Hosted client redirect URIs that get a code without confirmation (loopback and native app URIs always do). Others see a page naming where their access is going first. Defaults to well-known hosted client callbacks (Claude, ChatGPT, Cursor; see `src/redirect-uri.ts`); setting this replaces the defaults. A trailing `*` matches any suffix. |
 
 A full relay example:
 
